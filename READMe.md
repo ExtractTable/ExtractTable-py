@@ -9,9 +9,14 @@ The motivation is to make it easy for developers to extract tabular data from im
 
 # Prerequisite
 
-Before we talk/boast about the service, a developer MUST need an API key to use the ExtractTable service. [FREE credits here](https://extracttable.com/trail.html). 
+Before we talk/boast about the service, a developer must have an API key to use the ExtractTable service. Get some [FREE credits here](https://extracttable.com/trail.html). 
 
 We beat this market **not just in accuracy also in cost, and expiration**. You are most welcomed to [BUY credits here](https://extracttable.com/#pricing) or email me at saradhi@extracttable.com for assistance.
+
+
+# Installation
+
+`pip install -U ExtractTable`
 
 
 # Basic Usage
@@ -51,4 +56,3 @@ Pull requests are most welcome and greatly appreciated.
 ## License  
   
 This project is licensed under the GNU-3.0 License, see the [LICENSE](https://github.com/extracttable/camelotpro/blob/master/LICENSE) file for details.
-ls.
