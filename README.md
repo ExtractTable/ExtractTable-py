@@ -23,7 +23,7 @@ We beat this market **not just in accuracy also in cost, and expiration**. You a
 Ok, enough selling. Let the ease in coding do the talk, and the output encourages you to buy credits - put that timer on and count the LOC.
 
 ```python
-from ExtractTable import ExtractTable
+from ExtractTable import *
 et_sess = ExtractTable(api_key=YOUR_API_KEY)        # Replace your VALID API Key here
 print(et_sess.check_usage())        # Checks the API Key validity as well as shows associated plan usage 
 table_data = et_sess.process_file(filepath=Location_of_Image_with_Tables, output_format="df")
