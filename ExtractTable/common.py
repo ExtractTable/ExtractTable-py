@@ -24,7 +24,7 @@ class ConvertTo:
         self.data = data
         self.output = self._converter(fmt.lower(), index=index)
 
-    def _converter(self, fmt: str, orient: str = "index", index: bool = False) -> list:
+    def _converter(self, fmt: str, index: bool = False) -> list:
         """
         Actual conversion takes place here using Pandas
         :param fmt: format to be converted into
@@ -32,11 +32,11 @@ class ConvertTo:
         :param index: row index consideration in the output
         :return: list of tables from converted into the requested output format
         """
-        dfs = [pd.read_json(json.dumps(table["TableJson"]), orient=orient) for table in self.data["Tables"]]
+        dfs = [pd.read_json(json.dumps(table["TableJson"]).T) for table in self.data["Tables"]]
         if fmt in ("df", "dataframe"):
             return dfs
         if fmt == "dict":
-            return [df.to_dict(orient=orient) for df in dfs]
+            return [df.to_dict() for df in dfs]
         elif fmt == "csv":
             save_folder = tempfile.mkdtemp()
             output_location = []
@@ -46,7 +46,7 @@ class ConvertTo:
                 output_location.append(csv_name)
             return output_location
         elif fmt == "json":
-            return [df.to_json(orient=orient) for df in dfs]
+            return [df.to_json() for df in dfs]
         else:
             warn_msg = f"Supported output formats {self.FORMATS} only. Assigned to default: {self.DEFAULT}"
             warnings.warn(warn_msg)
