@@ -1,6 +1,6 @@
 [![image](https://i.imgur.com/YIHmXue.png?1)](https://extracttable.com?ref=github-ET)
 
-**Latest verions: 1.0.2** [![image](https://img.shields.io/github/license/ExtractTable/ExtractTable-py)]() [![image](https://img.shields.io/badge/python-3.5%20%7C%203.6%20%7C%203.7-blue)]()  
+**Latest verions: 1.0.2.1** [![image](https://img.shields.io/github/license/ExtractTable/ExtractTable-py)]() [![image](https://img.shields.io/badge/python-3.5%20%7C%203.6%20%7C%203.7-blue)]()  
   
 # Overview
 [ExtractTable](https://extracttable.com) - **API to extract tabular data from images and scanned PDFs**
@@ -55,4 +55,4 @@ Pull requests are most welcome and greatly appreciated.
 
 ## License  
   
-This project is licensed under the GNU-3.0 License, see the [LICENSE](https://github.com/extracttable/camelotpro/blob/master/LICENSE) file for details.
+This project is licensed under the Apache License 2.0, see the [LICENSE](https://github.com/extracttable/ExtractTable-py/blob/master/LICENSE) file for details.
