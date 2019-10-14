@@ -28,7 +28,6 @@ class ConvertTo:
         """
         Actual conversion takes place here using Pandas
         :param fmt: format to be converted into
-        :param orient: required orientation of tabualar data in the output
         :param index: row index consideration in the output
         :return: list of tables from converted into the requested output format
         """
