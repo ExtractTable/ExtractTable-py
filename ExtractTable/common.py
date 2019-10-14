@@ -14,7 +14,7 @@ class ConvertTo:
     FORMATS = {"df", "dataframe", "json", "csv", "dict"}
     DEFAULT = "df"
 
-    def __init__(self, data: dict, fmt: str = DEFAULT, index: bool=False):
+    def __init__(self, data: dict, fmt: str = DEFAULT, index: bool = False):
         """
 
         :param data: Tabular JSON data from server
