@@ -1,6 +1,6 @@
 [![image](https://i.imgur.com/YIHmXue.png?1)](https://extracttable.com?ref=github-ET)
 
-**Latest verions: 1.0.1** [![image](https://img.shields.io/github/license/ExtractTable/ExtractTable-py)]() [![image](https://img.shields.io/badge/python-3.5%20%7C%203.6%20%7C%203.7-blue)]()  
+**Latest verions: 1.0.2** [![image](https://img.shields.io/github/license/ExtractTable/ExtractTable-py)]() [![image](https://img.shields.io/badge/python-3.5%20%7C%203.6%20%7C%203.7-blue)]()  
   
 # Overview
 [ExtractTable](https://extracttable.com) - **API to extract tabular data from images and scanned PDFs**
