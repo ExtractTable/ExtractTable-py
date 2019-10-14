@@ -1,7 +1,6 @@
 """
 Preprocess the output received from server and interface as a final result to the client
 """
-import json
 import os
 import tempfile
 import warnings
@@ -31,10 +30,10 @@ class ConvertTo:
         :param index: row index consideration in the output
         :return: list of tables from converted into the requested output format
         """
-        dfs = [pd.read_json(json.dumps(table["TableJson"]).T) for table in self.data["Tables"]]
+        dfs = [pd.DataFrame.from_dict(table["TableJson"]).T for table in self.data["Tables"]]
         if fmt in ("df", "dataframe"):
             return dfs
-        if fmt == "dict":
+        elif fmt == "dict":
             return [df.to_dict() for df in dfs]
         elif fmt == "csv":
             save_folder = tempfile.mkdtemp()
