@@ -1,2 +1,3 @@
 requests>=2.21
 pandas>=0.24
+PyPDF2>=1.26
