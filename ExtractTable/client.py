@@ -10,7 +10,7 @@ import warnings
 
 import requests as rq
 
-from .FileOperations import CheckFile
+from .FileOperations import PrepareInput
 from .config import HOST, JobStatus
 from .parsers import ResponseParser, OutputParser
 from .common import ConvertTo
@@ -119,12 +119,14 @@ class ExtractTable:
         :param dup_check: Idempotent requests handler
         :param indexing: If row index is needed
         :param kwargs:
-
-            max_wait_time: (int) 300 default; Maximum Time to wait before returning to the client
-            anyother form-data to be sent to the server
+            max_wait_time: int, optional (default: 300);
+                Maximum Time to wait before returning to the client
+            pages : str, optional (default: '1')
+                Comma-separated page numbers.
+                Example: '1,3,4' or '1,4-end' or 'all'.
+            anyother form-data to be sent to the server for future considerations
         :return: user requested output in list;
         """
-        CheckFile(filepath)
         # Raise a warning if unknown format is requested
         if output_format not in self._OUTPUT_FORMATS:
             default_format = "dict"
@@ -132,8 +134,9 @@ class ExtractTable:
                        f"Assigned default format: {default_format}"
             warnings.warn(warn_msg)
 
-        with open(filepath, 'rb') as fp:
-            server_resp = self.trigger_process(fp, dup_check=dup_check, **kwargs)
+        with PrepareInput(filepath, pages=kwargs.pop("pages", "1")) as infile:
+            with open(infile.filepath, 'rb') as fp:
+                server_resp = self.trigger_process(fp, dup_check=dup_check, **kwargs)
 
         result = ConvertTo(data=server_resp, fmt=output_format, index=indexing).output
         return result
