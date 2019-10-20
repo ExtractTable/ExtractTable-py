@@ -1,6 +1,6 @@
 [![image](https://i.imgur.com/YIHmXue.png?1)](https://extracttable.com?ref=github-ET)
 
-[![image](https://img.shields.io/pypi/v/extracttable.svg?maxAge=3600)](https://pypi.org/project/extracttable/) [![image](https://img.shields.io/github/license/ExtractTable/ExtractTable-py)]() [![image](https://img.shields.io/badge/python-3.5%20%7C%203.6%20%7C%203.7-blue)]()  
+[![image](https://img.shields.io/pypi/v/extracttable.svg?maxAge=3600)](https://pypi.org/project/extracttable/) ![image](https://img.shields.io/github/license/ExtractTable/ExtractTable-py) ![image](https://img.shields.io/badge/python-3.5%20%7C%203.6%20%7C%203.7-blue)
   
 # Overview
 [ExtractTable](https://extracttable.com) - **API to extract tabular data from images and scanned PDFs**
