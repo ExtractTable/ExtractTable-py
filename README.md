@@ -1,6 +1,6 @@
 [![image](https://i.imgur.com/YIHmXue.png?1)](https://extracttable.com?ref=github-ET)
 
-**Latest verions: 1.0.2.1** [![image](https://img.shields.io/github/license/ExtractTable/ExtractTable-py)]() [![image](https://img.shields.io/badge/python-3.5%20%7C%203.6%20%7C%203.7-blue)]()  
+[![image](https://img.shields.io/pypi/v/extracttable.svg?maxAge=3600)](https://pypi.org/project/extracttable/) [![image](https://img.shields.io/github/license/ExtractTable/ExtractTable-py)]() [![image](https://img.shields.io/badge/python-3.5%20%7C%203.6%20%7C%203.7-blue)]()  
   
 # Overview
 [ExtractTable](https://extracttable.com) - **API to extract tabular data from images and scanned PDFs**
@@ -28,7 +28,7 @@ et_sess = ExtractTable(api_key=YOUR_API_KEY)        # Replace your VALID API Key
 print(et_sess.check_usage())        # Checks the API Key validity as well as shows associated plan usage 
 table_data = et_sess.process_file(filepath=Location_of_Image_with_Tables, output_format="df")
 ```
-[Detail Code Here](ExampleCode.ipynb)
+[Detail Code Here](example-code.ipynb)
 
 
 ### Woahh, as simple as that ?!
@@ -50,9 +50,17 @@ Its up to you now to explore the ways.
 
 ## Pull Requests & Rewards
 
-Pull requests are most welcome and greatly appreciated. 
+Pull requests are most welcome and greatly appreciated with API credits.
 
 
 ## License  
   
 This project is licensed under the Apache License 2.0, see the [LICENSE](https://github.com/extracttable/ExtractTable-py/blob/master/LICENSE) file for details.
+
+
+## Social Media
+Follow us on Social media for library updates and free credits.
+
+[![Image](https://cdn3.iconfinder.com/data/icons/socialnetworking/32/linkedin.png)](https://www.linkedin.com/company/extracttable)
+&nbsp;&nbsp;&nbsp;&nbsp;
+[![Image](https://abs.twimg.com/favicons/twitter.ico)](https://twitter.com/extracttable)
