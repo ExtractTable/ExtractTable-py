@@ -53,7 +53,7 @@ class PrepareInput:
             pass
         else:
             print("[Info]: Aggregating user defined pages..", self.pages)
-            gather_pages = self._get_pages(filepath, pages)
+            gather_pages = self._get_pages(self.filepath, pages)
             self.filepath = self.pdf_separator(gather_pages)
         CheckFile(self.filepath)
 
