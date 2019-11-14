@@ -49,6 +49,7 @@ class ExtractTable:
         """
         host = host if not host.startswith("http") else host.split("/")[2]
         url = urlparse.urlunparse(('https', host, '', '', '', ''))
+        data.update({"library": kwargs.get("library", "ExtractTable")})
         self.ServerResponse = self._session.request(method, url, params=params, data=data, **kwargs)
         ResponseParser(resp=self.ServerResponse, show_warn=self._WARNINGS)
         return self.ServerResponse.json()
@@ -107,6 +108,7 @@ class ExtractTable:
     def process_file(
             self,
             filepath: ty.Union[str, bytes, os.PathLike],
+            pages: ty.Union[str] = "1",
             output_format: str = "df",
             dup_check: bool = False,
             indexing: bool = False,
@@ -115,16 +117,16 @@ class ExtractTable:
         """
         Trigge the file for processing and returns the tabular data in the user requested output format
         :param filepath: Location of the file
+        :param pages : str, optional (default: '1')
+                Comma-separated page numbers.
+                Example: '1,3,4' or '1,4-end' or 'all'.
         :param output_format: datafram as default; Check `ExtractTable._OUTPUT_FORMATS` to see available options
         :param dup_check: Idempotent requests handler
         :param indexing: If row index is needed
         :param kwargs:
             max_wait_time: int, optional (default: 300);
                 Maximum Time to wait before returning to the client
-            pages : str, optional (default: '1')
-                Comma-separated page numbers.
-                Example: '1,3,4' or '1,4-end' or 'all'.
-            anyother form-data to be sent to the server for future considerations
+            any other form-data to be sent to the server for future considerations
         :return: user requested output in list;
         """
         # Raise a warning if unknown format is requested
@@ -134,7 +136,7 @@ class ExtractTable:
                        f"Assigned default format: {default_format}"
             warnings.warn(warn_msg)
 
-        with PrepareInput(filepath, pages=kwargs.pop("pages", "1")) as infile:
+        with PrepareInput(filepath, pages=pages) as infile:
             with open(infile.filepath, 'rb') as fp:
                 server_resp = self.trigger_process(fp, dup_check=dup_check, **kwargs)
 
