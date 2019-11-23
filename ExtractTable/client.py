@@ -49,7 +49,6 @@ class ExtractTable:
         """
         host = host if not host.startswith("http") else host.split("/")[2]
         url = urlparse.urlunparse(('https', host, '', '', '', ''))
-        data.update({"library": kwargs.get("library", "ExtractTable")})
         self.ServerResponse = self._session.request(method, url, params=params, data=data, **kwargs)
         ResponseParser(resp=self.ServerResponse, show_warn=self._WARNINGS)
         return self.ServerResponse.json()
@@ -93,7 +92,7 @@ class ExtractTable:
         :return: Tabular JSON when processed successful else helpful user info
         """
         max_wait_time = kwargs.pop('max_wait_time', 300)
-        data = {'dup_check': dup_check}
+        data = {'dup_check': dup_check, "library": kwargs.pop("library", "ExtractTable")}
         data.update(kwargs)
         resp = self._make_request('post', HOST.TRIGGER, data=data, files={'input': fp})
 
