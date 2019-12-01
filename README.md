@@ -9,9 +9,7 @@ The motivation is to make it easy for developers to extract tabular data from im
 
 # Prerequisite
 
-Before we talk/boast about the service, a developer MUST need an API key to use the ExtractTable service. [FREE credits here](https://extracttable.com/trail.html). 
-
-We dominate this market **not in user count but in accuracy, cost, and expiration**. You are most welcomed to [BUY credits here](https://extracttable.com/#pricing) or email me at saradhi@extracttable.com for assistance.
+Before we talk/boast about the service, a developer MUST need an API key to use the ExtractTable service. [FREE credits here](https://extracttable.com/trail.html) - check data privacy in FAQ.
 
 
 # Installation
