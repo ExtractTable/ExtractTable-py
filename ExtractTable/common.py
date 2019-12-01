@@ -30,7 +30,7 @@ class ConvertTo:
         :param index: row index consideration in the output
         :return: list of tables from converted into the requested output format
         """
-        dfs = [pd.DataFrame.from_dict(table["TableJson"]).T for table in self.data["Tables"]]
+        dfs = [pd.DataFrame.from_dict({int(k): v for k, v in table["TableJson"].items()}, orient="index") for table in self.data["Tables"]]
         if fmt in ("df", "dataframe"):
             return dfs
         elif fmt == "dict":
