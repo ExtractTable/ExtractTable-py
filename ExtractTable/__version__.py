@@ -1,6 +1,6 @@
-VERSION = (1, 2, 1)
-PRERELEASE = None  # "alpha", "beta" or "rc"
-REVISION = 2
+VERSION = (2, 0, 0)
+PRERELEASE = "beta"  # "alpha", "beta" or "rc"
+REVISION = 1
 
 
 def generate_version(version, prerelease=None, revision=None):
@@ -13,7 +13,7 @@ def generate_version(version, prerelease=None, revision=None):
 
 
 __title__ = "ExtractTable"
-__description__ = "Extract tabular data from images and scanned PDFs"
+__description__ = "Extract tabular data from images and scanned PDFs. Easily convert image to table, convert pdf to table"
 __url__ = "https://github.com/ExtractTable/ExtractTable-py"
 __version__ = generate_version(VERSION, prerelease=PRERELEASE, revision=REVISION)
 __author__ = "Saradhi"

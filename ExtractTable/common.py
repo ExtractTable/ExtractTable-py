@@ -33,7 +33,7 @@ class ConvertTo:
         # To convert the column indices to int to maintain the correct order on a table with more than 9 columns
         dfs = [pd.DataFrame.from_dict(
             {int(k): v for k, v in table["TableJson"].items()}, orient="index"
-        ) for table in self.data["Tables"]]
+        ) for table in self.data.get("Tables", [])]
         if fmt in ("df", "dataframe"):
             return dfs
         elif fmt == "dict":
