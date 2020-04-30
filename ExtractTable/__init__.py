@@ -3,8 +3,8 @@ Any Request or Response of a transaction must take place here
 """
 from urllib import parse as urlparse
 import os
-import io
 import typing as ty
+from typing import BinaryIO
 import time
 import warnings
 
@@ -12,16 +12,18 @@ import requests as rq
 
 from .FileOperations import PrepareInput
 from .config import HOST, JobStatus
-from .parsers import ResponseParser, OutputParser
+from .parsers import ValidateResponse
 from .common import ConvertTo
-from .exceptions import ClientFileError
+from .exceptions import ClientFileSizeError
 
 
 class ExtractTable:
+    from .__version__ import __version__
     _OUTPUT_FORMATS: set = ConvertTo.FORMATS
     _DEFAULT: str = ConvertTo.DEFAULT
     _WARNINGS: bool = True
     _WAIT_UNTIL_OUTPUT: bool = True
+    VERSION = f"ExtractTable_{__version__}"
 
     def __init__(self, api_key: str):
         """
@@ -53,7 +55,7 @@ class ExtractTable:
         host = host if not host.startswith("http") else host.split("/")[2]
         url = urlparse.urlunparse(('https', host, '', '', '', ''))
         self.ServerResponse = self._session.request(method, url, params=params, data=data, **kwargs)
-        ResponseParser(resp=self.ServerResponse, show_warn=self._WARNINGS)
+        ValidateResponse(resp=self.ServerResponse, show_warn=self._WARNINGS)
 
         return self.ServerResponse.json()
 
@@ -64,8 +66,7 @@ class ExtractTable:
         """
         resp = self._make_request('get', HOST.VALIDATOR)
 
-        result = OutputParser.usage(resp)
-        return result
+        return resp['usage']
 
     def get_result(self, job_id: str, wait_time: int = 10, max_wait_time: int = 300) -> dict:
         """
@@ -84,10 +85,9 @@ class ExtractTable:
             max_wait_time -= wait_time
             resp = self._make_request('get', HOST.RESULT, params=params)
 
-        result = OutputParser.retrieved(resp)
-        return result
+        return resp
 
-    def trigger_process(self, fp: io.BufferedReader, dup_check: bool = False, **kwargs) -> dict:
+    def trigger_process(self, fp: BinaryIO, dup_check: bool = False, **kwargs) -> dict:
         """
         Trigger the document to the server for processing
         :param fp: Binary file data of the input file
@@ -96,10 +96,9 @@ class ExtractTable:
         :return: Tabular JSON when processed successful else helpful user info
         """
         max_wait_time = kwargs.pop('max_wait_time', 300)
-        data = {'dup_check': dup_check, "library": kwargs.pop("library", "ExtractTable")}
+        data = {'dup_check': dup_check, "library": kwargs.pop("library", self.VERSION)}
         data.update(kwargs)
-        if data.get("signed_filename", ""):
-            print("Alternative route")
+        if "signed_filename" in data:
             resp = self._make_request('post', HOST.TRIGGER, data=data)
         else:
             resp = self._make_request('post', HOST.TRIGGER, data=data, files={'input': fp})
@@ -109,15 +108,12 @@ class ExtractTable:
         if 'JobId' in resp:
             resp = self.get_result(resp['JobId'], max_wait_time=max_wait_time)
 
-        result = OutputParser.triggered(resp)
-        return result
+        return resp
 
-    def presign_upload(self, filename):
-        resp = self._make_request('post', HOST.PRESIGN, data={"filename": filename})
+    def bigfile_upload(self, filename):
+        resp = self._make_request('post', HOST.BIGFILE, data={"filename": filename})
 
-        result = OutputParser.triggered(resp)
-        # resp = rq.post(HOST.PRESIGN, data={"filename": filename})
-        return result
+        return resp
 
     def process_file(
             self,
@@ -153,15 +149,15 @@ class ExtractTable:
         try:
             with PrepareInput(filepath, pages=pages) as infile:
                 with open(infile.filepath, 'rb') as fp:
-                    server_resp = self.trigger_process(fp, dup_check=dup_check, **kwargs)
-        except ClientFileError:
-            pre_gen = self.presign_upload(filename=os.path.basename(filepath))
+                    trigger_resp = self.trigger_process(fp, dup_check=dup_check, **kwargs)
+        except ClientFileSizeError:
+            big_gen = self.bigfile_upload(filename=os.path.basename(filepath))
             with open(filepath, 'rb') as ifile:
-                rq.post(pre_gen['url'], data=pre_gen['fields'], files={'file': ifile})
-            server_resp = self.trigger_process(None, signed_filename=os.path.basename(filepath), **kwargs)
+                rq.post(big_gen['url'], data=big_gen['fields'], files={'file': ifile})
+            trigger_resp = self.trigger_process(None, signed_filename=os.path.basename(filepath), **kwargs)
 
-        for _type, _obj in server_resp.items():
+        for _type, _obj in trigger_resp.items():
             self.__setattr__(_type, _obj)
 
-        result = ConvertTo(data=server_resp, fmt=output_format, index=indexing).output
+        result = ConvertTo(data=trigger_resp, fmt=output_format, index=indexing).output
         return result
