@@ -23,7 +23,21 @@ class ServiceError(Exception):
         return str(_msg_)
 
 
-class ClientFileError(Exception):
+class ClientFileSizeError(Exception):
+    """Raise a Client Side error based on the file to be processed"""
+    def __init__(self, **kwargs):
+        self.resp = kwargs
+
+    def __str__(self) -> str:
+        _msg_ = ''
+        if self.resp.get('Message', ''):
+            _msg_ = self.resp.get('Message', '')
+        else:
+            _msg_ = self.resp.get('message', '')
+        return str(_msg_)
+
+
+class ClientFileTypeError(Exception):
     """Raise a Client Side error based on the file to be processed"""
     def __init__(self, **kwargs):
         self.resp = kwargs
