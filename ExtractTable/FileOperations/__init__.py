@@ -9,7 +9,7 @@ import tempfile
 import requests
 import PyPDF2
 
-from ..exceptions import ClientFileError
+from ..exceptions import *
 
 
 class CheckFile:
@@ -25,13 +25,13 @@ class CheckFile:
         """To check file extension"""
         if self.filepath.lower().endswith(self.__SUPPORTED_EXTENSIONS__):
             return
-        raise ClientFileError(Message=f"Allowed file types are {self.__SUPPORTED_EXTENSIONS__}")
+        raise ClientFileTypeError(Message=f"Allowed file types are {self.__SUPPORTED_EXTENSIONS__}")
 
     def size_error(self) -> ty.Union[Exception, None]:
         # 1027 to create some buffer
         if os.stat(self.filepath).st_size <= self.__THRESHOLD_SIZE__*1027*1027:
             return
-        raise ClientFileError(Message=f"File Size greater than the threshold {self.__THRESHOLD_SIZE__} Mb.")
+        raise ClientFileSizeError(Message=f"File Size greater than the threshold {self.__THRESHOLD_SIZE__} Mb.")
 
 
 class PrepareInput:
@@ -73,7 +73,7 @@ class PrepareInput:
 
     @staticmethod
     def _get_pages(filepath: os.PathLike, pages: str) -> set:
-        # Credits to camelot library - customized
+        # Credits to camelot-py library - customized
         """Converts pages string to list of ints.
 
         Parameters
@@ -86,8 +86,7 @@ class PrepareInput:
 
         Returns
         -------
-        P : list
-            List of int page numbers.
+        List of int page numbers.
 
         """
         page_numbers = []

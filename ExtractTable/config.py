@@ -8,6 +8,7 @@ class HOST:
     VALIDATOR = 'validator.extracttable.com'
     TRIGGER = 'trigger.extracttable.com'
     RESULT = 'getresult.extracttable.com'
+    BIGFILE = 'bigfile.extracttable.com'
 
 
 class JobStatus:

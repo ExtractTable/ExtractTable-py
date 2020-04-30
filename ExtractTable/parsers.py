@@ -8,7 +8,7 @@ import requests as rq
 from .exceptions import ServiceError
 
 
-class ResponseParser:
+class ValidateResponse:
     """Raise custom errors"""
     def __init__(self, resp: rq.Response, show_warn: bool = True):
         """
@@ -41,18 +41,3 @@ class ResponseParser:
 
         if _msg_:
             warnings.warn(_msg_)
-
-
-class OutputParser:
-    """Initialized for future scope"""
-    @staticmethod
-    def usage(resp: dict) -> dict:
-        return resp['usage']
-
-    @staticmethod
-    def triggered(resp: dict) -> dict:
-        return resp
-
-    @staticmethod
-    def retrieved(resp: dict) -> dict:
-        return resp

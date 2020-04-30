@@ -1,9 +1,9 @@
 import os
-import io
+from typing import BinaryIO
 
 import pytest
 
-from ExtractTable.client import ExtractTable
+from ExtractTable import ExtractTable
 from ExtractTable.exceptions import ServiceError
 from tests.constants import API_KEY, FILE_PATH
 
@@ -20,7 +20,7 @@ def test_get_result_fail(client: ExtractTable):
 
 def test_trigger_process_fail(client: ExtractTable):
     with pytest.raises(ServiceError):
-        client.trigger_process(io.BytesIO())
+        client.trigger_process(BinaryIO)
 
 
 def test_check_usage(client: ExtractTable):
