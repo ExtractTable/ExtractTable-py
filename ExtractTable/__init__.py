@@ -105,13 +105,22 @@ class ExtractTable:
 
         # GetResult if JobId is present in the response
         # Usually happens when processing PDF files or idempotent requests
-        if 'JobId' in resp:
+        if 'JobId' in resp and resp.get("JobStatus", "") == JobStatus.PROCESSING:
+            if max_wait_time > 0:
+                print("[Info]: Waiting to retrieve the output; JobId:", resp['JobId'])
+            else:
+                print("[Info]: JobId:", resp['JobId'])
             resp = self.get_result(resp['JobId'], max_wait_time=max_wait_time)
 
         return resp
 
-    def bigfile_upload(self, filename):
-        resp = self._make_request('post', HOST.BIGFILE, data={"filename": filename})
+    def bigfile_upload(self, filepath):
+        """
+        To aid big file processing by uploading the file first and triggering the process next
+        :param filepath: filepath
+        :return: a signed URL to upload the file
+        """
+        resp = self._make_request('post', HOST.BIGFILE, data={"filename": filepath})
 
         return resp
 
@@ -132,7 +141,7 @@ class ExtractTable:
                 Example: '1,3,4' or '1,4-end' or 'all'.
         :param output_format: datafram as default; Check `ExtractTable._OUTPUT_FORMATS` to see available options
         :param dup_check: Idempotent requests handler
-        :param indexing: If row index is needed
+        :param indexing: Whether to output row & column indices in the outputs other than df
         :param kwargs:
             max_wait_time: int, optional (default: 300);
                 Maximum Time to wait before returning to the client
@@ -151,7 +160,7 @@ class ExtractTable:
                 with open(infile.filepath, 'rb') as fp:
                     trigger_resp = self.trigger_process(fp, dup_check=dup_check, **kwargs)
         except ClientFileSizeError:
-            big_gen = self.bigfile_upload(filename=os.path.basename(filepath))
+            big_gen = self.bigfile_upload(filepath=os.path.basename(filepath))
             with open(filepath, 'rb') as ifile:
                 rq.post(big_gen['url'], data=big_gen['fields'], files={'file': ifile})
             trigger_resp = self.trigger_process(None, signed_filename=os.path.basename(filepath), **kwargs)
@@ -159,5 +168,5 @@ class ExtractTable:
         for _type, _obj in trigger_resp.items():
             self.__setattr__(_type, _obj)
 
-        result = ConvertTo(data=trigger_resp, fmt=output_format, index=indexing).output
+        result = ConvertTo(data=trigger_resp, fmt=output_format, indexing=indexing).output
         return result
