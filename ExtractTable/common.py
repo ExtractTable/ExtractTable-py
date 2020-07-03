@@ -4,6 +4,7 @@ Preprocess the output received from server and interface as a final result to th
 import os
 import tempfile
 import warnings
+import collections
 
 import pandas as pd
 
@@ -13,27 +14,32 @@ class ConvertTo:
     FORMATS = {"df", "dataframe", "json", "csv", "dict"}
     DEFAULT = "df"
 
-    def __init__(self, data: dict, fmt: str = DEFAULT, index: bool = False):
+    def __init__(self, data: dict, fmt: str = DEFAULT, indexing: bool = False):
         """
 
         :param data: Tabular JSON data from server
         :param fmt: format to be converted into
-        :param index: row index consideration in the output
+        :param indexing: row & column index consideration in the output
         """
         self.data = data
-        self.output = self._converter(fmt.lower(), index=index)
+        self.output = self._converter(fmt.lower(), indexing=indexing)
 
-    def _converter(self, fmt: str, index: bool = False) -> list:
+    def _converter(self, fmt: str, indexing: bool = False) -> list:
         """
         Actual conversion takes place here using Pandas
         :param fmt: format to be converted into
-        :param index: row index consideration in the output
+        :param indexing: row index consideration in the output
         :return: list of tables from converted into the requested output format
         """
-        # To convert the column indices to int to maintain the correct order on a table with more than 9 columns
-        dfs = [pd.DataFrame.from_dict(
-            {int(k): v for k, v in table["TableJson"].items()}, orient="index"
-        ) for table in self.data.get("Tables", [])]
+        dfs = []
+        for table in self.data.get("Tables", []):
+            tmp = {int(k): v for k, v in table["TableJson"].items()}
+            # To convert column indices to int to maintain the table order with more than 9 columns
+            cols = [str(x) for x in sorted([int(x) for x in tmp[0]])]
+            # To convert row indices to int and maintain the table order with more than 9 rows
+            tmp = collections.OrderedDict(sorted(tmp.items()))
+            dfs.append(pd.DataFrame.from_dict(tmp, orient="index", columns=cols))
+
         if fmt in ("df", "dataframe"):
             return dfs
         elif fmt == "dict":
@@ -43,7 +49,7 @@ class ConvertTo:
             output_location = []
             for tbl_n, df in enumerate(dfs):
                 csv_name = os.path.join(save_folder, f"_table_{tbl_n+1}.csv")
-                df.to_csv(csv_name, index=index)
+                df.to_csv(csv_name, index=indexing, header=indexing)
                 output_location.append(csv_name)
             return output_location
         elif fmt == "json":
