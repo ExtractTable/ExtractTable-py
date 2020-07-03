@@ -50,7 +50,7 @@ Its up to you now to explore the ways.
 
 # Explore
 check the complete server response of the latest job with `et_sess.ServerResponse.json()`
-```json
+```javascript
 {
     "JobStatus": <string>,                              # Status of the triggered Process  @ JOB-LEVEL
     "Pages": <integer>,                                 # Number of pages processed in this request @ PAGE-LEVEL
