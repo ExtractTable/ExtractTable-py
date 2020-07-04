@@ -163,7 +163,7 @@ class ExtractTable:
             big_gen = self.bigfile_upload(filepath=os.path.basename(filepath))
             with open(filepath, 'rb') as ifile:
                 rq.post(big_gen['url'], data=big_gen['fields'], files={'file': ifile})
-            trigger_resp = self.trigger_process(None, signed_filename=os.path.basename(filepath), **kwargs)
+            trigger_resp = self.trigger_process(None, signed_filename=big_gen["fields"]["key"], dup_check=dup_check, **kwargs)
 
         for _type, _obj in trigger_resp.items():
             self.__setattr__(_type, _obj)
