@@ -5,6 +5,8 @@ import os
 import tempfile
 import warnings
 import collections
+from statistics import mode
+from typing import List
 
 import pandas as pd
 
@@ -58,3 +60,46 @@ class ConvertTo:
             warn_msg = f"Supported output formats {self.FORMATS} only. Assigned to default: {self.DEFAULT}"
             warnings.warn(warn_msg)
             return dfs
+
+
+class PostProcessing:
+    """To apply post processing techniques on the output"""
+    def __init__(self, dataframes: List[pd.DataFrame], split_merged_rows=False):
+        self.dataframes = dataframes
+        if split_merged_rows:
+            self.dataframes = self.split_merged_rows(dataframes)
+
+    def split_merged_rows(self, dataframes: List[pd.DataFrame]) -> List[pd.DataFrame]:
+        """To split the merged rows into possible multiple rows"""
+        for df_idx, each_df in enumerate(dataframes):
+            re_format = []
+            for row in each_df.to_numpy():
+                row = list(row)
+                seperators = []
+                for col in row:
+                    # looks like line separator is " "
+                    seperators.append(col.strip().count(" "))
+                # Take statistical mode into consideration to assume the number of rows merged
+                mode_ = mode(seperators)
+
+                if mode_:
+                    tmp = []
+                    for col in row:
+                        # split the merged rows inside the col
+                        tmp.append(col.strip().split(' ', mode_))
+
+                    for idx in range(len(tmp[0])):
+                        tmp_ = []
+                        for x in range(len(tmp)):
+                            try:
+                                val = tmp[x][idx]
+                            except IndexError:
+                                val = ""
+                            tmp_.append(val)
+                        re_format.append(tmp_)
+                else:
+                    re_format.append(row)
+
+            dataframes[df_idx] = pd.DataFrame(re_format)
+
+        return dataframes
