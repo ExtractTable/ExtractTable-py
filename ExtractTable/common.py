@@ -2,6 +2,7 @@
 Preprocess the output received from server and interface as a final result to the client
 """
 import os
+import re
 import tempfile
 import warnings
 import collections
@@ -16,7 +17,7 @@ class ConvertTo:
     FORMATS = {"df", "dataframe", "json", "csv", "dict"}
     DEFAULT = "df"
 
-    def __init__(self, data: dict, fmt: str = DEFAULT, indexing: bool = False):
+    def __init__(self, data: dict, fmt: str = DEFAULT, indexing: bool = False, table_obj="TableJson"):
         """
 
         :param data: Tabular JSON data from server
@@ -24,9 +25,9 @@ class ConvertTo:
         :param indexing: row & column index consideration in the output
         """
         self.data = data
-        self.output = self._converter(fmt.lower(), indexing=indexing)
+        self.output = self._converter(fmt.lower(), indexing=indexing, table_obj=table_obj)
 
-    def _converter(self, fmt: str, indexing: bool = False) -> list:
+    def _converter(self, fmt: str, indexing: bool = False, table_obj="TableJson") -> list:
         """
         Actual conversion takes place here using Pandas
         :param fmt: format to be converted into
@@ -35,7 +36,7 @@ class ConvertTo:
         """
         dfs = []
         for table in self.data.get("Tables", []):
-            tmp = {int(k): v for k, v in table["TableJson"].items()}
+            tmp = {int(k): v for k, v in table[table_obj].items()}
             # To convert column indices to int to maintain the table order with more than 9 columns
             cols = [str(x) for x in sorted([int(x) for x in tmp[0]])]
             # To convert row indices to int and maintain the table order with more than 9 rows
@@ -64,14 +65,15 @@ class ConvertTo:
 
 class PostProcessing:
     """To apply post processing techniques on the output"""
-    def __init__(self, dataframes: List[pd.DataFrame], split_merged_rows=False):
-        self.dataframes = dataframes
+    def __init__(self, et_resp: dict, split_merged_rows=False):
+        self.et_resp = et_resp
+        self.dataframes = ConvertTo(data=et_resp, fmt="df", table_obj="TableJson").output
         if split_merged_rows:
-            self.dataframes = self.split_merged_rows(dataframes)
+            self.dataframes = self.split_merged_rows()
 
-    def split_merged_rows(self, dataframes: List[pd.DataFrame]) -> List[pd.DataFrame]:
+    def split_merged_rows(self) -> List[pd.DataFrame]:
         """To split the merged rows into possible multiple rows"""
-        for df_idx, each_df in enumerate(dataframes):
+        for df_idx, each_df in enumerate(self.dataframes):
             re_format = []
             for row in each_df.to_numpy():
                 row = list(row)
@@ -100,6 +102,66 @@ class PostProcessing:
                 else:
                     re_format.append(row)
 
-            dataframes[df_idx] = pd.DataFrame(re_format)
+            self.dataframes[df_idx] = pd.DataFrame(re_format)
 
-        return dataframes
+        return self.dataframes
+
+    def fix_decimal_format(self, columns_idx: List[int] = None, decimal_separator: str = ".", thousands_separator: str = ",", decimal_position: int = 2) -> List[pd.DataFrame]:
+        """
+        To fix decimal and thousands separator values. Often commas as detected as period
+        :param columns_idx: user preferred columns indices.
+                Default loops through all columns to find numeric or decimal columns
+        :param decimal_separator: preferred decimal separator
+        :param thousands_separator: preferred thousands separator
+        :param decimal_position: preferred decimal position
+        :return: corrected list of dataframes
+        """
+        # TODO: Should we consider only bad confidence values?
+
+        reg_ = f"[{decimal_separator}{thousands_separator}]"
+        thou_regex = reg_ + '(?=.*' + reg_ + ')'
+        decimal_position = int(decimal_position)
+
+        for df_idx, df in enumerate(self.dataframes):
+            if not columns_idx:
+                columns_idx = df.columns
+
+            for col_idx in columns_idx:
+                digits = sum(df[str(col_idx)].str.count(pat=r'\d'))
+                chars = sum(df[str(col_idx)].str.count(pat=r'[\w]'))
+
+                if digits/chars < 0.75:
+                    # To infer a numeric or float column
+                    # Check if the column contains more digits or characters
+                    continue
+
+                df[str(col_idx)] = df[str(col_idx)].str.strip()
+                df[str(col_idx)].replace(regex={thou_regex: thousands_separator}, inplace=True)
+
+                for i, _ in enumerate(df[str(col_idx)]):
+                    if not len(df[str(col_idx)][i]) > decimal_position:
+                        # length of atleast decimal_position
+                        continue
+                    elif df[str(col_idx)][i][-(decimal_position+1)] == decimal_separator:
+                        # nothing to do if decimal separator already in place
+                        continue
+
+                    # If decimal position is a not alphanumeric
+                    if re.search(r'\W+', df[str(col_idx)][i][-(decimal_position+1)]):
+                        digits = len(re.findall(r'\d', df[str(col_idx)][i]))
+                        if digits/len(df[str(col_idx)][i]) >= 0.5:
+                            df[str(col_idx)][i] = df[str(col_idx)][i][:-(decimal_position+1)] + decimal_separator + df[str(col_idx)][i][-decimal_position:]
+
+            self.dataframes[df_idx] = df
+        return self.dataframes
+
+    def fix_date_format(self, columns_idx: List[int] = None):
+        """
+        To fix date formats of the column
+        Eg: 12|1212020 as 12/12/2020
+        :param columns_idx: user preferred columns indices.
+                Default loops through all columns to find Date Columns
+        :return: correted list of dataframes
+        """
+        return self.dataframes
+
