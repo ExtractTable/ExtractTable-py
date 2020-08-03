@@ -65,30 +65,27 @@ class ConvertTo:
 
 class PostProcessing:
     """To apply post processing techniques on the output"""
-    def __init__(self, et_resp: dict, split_merged_rows=False):
-        self.et_resp = et_resp
-        self.dataframes = ConvertTo(data=et_resp, fmt="df", table_obj="TableJson").output
-        if split_merged_rows:
-            self.dataframes = self.split_merged_rows()
+    def __init__(self, et_resp: dict):
+        self.dataframes = ConvertTo(data=et_resp).output
 
     def split_merged_rows(self) -> List[pd.DataFrame]:
-        """To split the merged rows into possible multiple rows"""
+        """
+        To split the merged rows into possible multiple rows
+        :return: reformatted list of dataframes
+        """
         for df_idx, each_df in enumerate(self.dataframes):
-            re_format = []
+            reformat = []
             for row in each_df.to_numpy():
                 row = list(row)
-                seperators = []
-                for col in row:
-                    # looks like line separator is " "
-                    seperators.append(col.strip().count(" "))
-                # Take statistical mode into consideration to assume the number of rows merged
+
+                # looks like line separator is " "
+                seperators = [col.strip().count(" ") for col in row]
+                # Statistical mode to assume the number of rows merged
                 mode_ = mode(seperators)
 
                 if mode_:
-                    tmp = []
-                    for col in row:
-                        # split the merged rows inside the col
-                        tmp.append(col.strip().split(' ', mode_))
+                    # split the merged rows inside the col
+                    tmp = [col.strip().split(' ', mode_) for col in row]
 
                     for idx in range(len(tmp[0])):
                         tmp_ = []
@@ -98,11 +95,40 @@ class PostProcessing:
                             except IndexError:
                                 val = ""
                             tmp_.append(val)
-                        re_format.append(tmp_)
+                        reformat.append(tmp_)
                 else:
-                    re_format.append(row)
+                    reformat.append(row)
 
-            self.dataframes[df_idx] = pd.DataFrame(re_format)
+            self.dataframes[df_idx] = pd.DataFrame(reformat)
+
+        return self.dataframes
+
+    def split_merged_columns(self, columns_idx: List[int] = None, force_split: bool = False) -> List[pd.DataFrame]:
+        """
+        To split the merged columns into possible multiple columns
+        :param columns_idx: user preferred columns indices.
+                Default loops through all columns to find numeric or decimal columns
+        :param force_split: To force split through the columns
+        :return: reformatted list of dataframes
+        """
+        # TODO: Should we consider delimiter_pattern for the split?
+        for df_idx, df in enumerate(self.dataframes):
+            if not columns_idx:
+                columns_idx = df.columns
+
+            columns_idx = [str(x) for x in columns_idx]
+            reformat = []
+            for col_idx in columns_idx:
+                tmp = df[col_idx].str.split(expand=True)
+
+                if not any([not any(tmp.isna().any()), force_split]) or tmp.shape[-1] == 1:
+                    reformat.append(df[col_idx].tolist())
+                    # If user wanted force_split or the split columns have all cell values
+                    # then proceed next
+                else:
+                    reformat.extend([tmp[each].tolist() for each in tmp.columns])
+
+            self.dataframes[df_idx] = pd.DataFrame(reformat).T
 
         return self.dataframes
 
@@ -125,43 +151,64 @@ class PostProcessing:
         for df_idx, df in enumerate(self.dataframes):
             if not columns_idx:
                 columns_idx = df.columns
+            columns_idx = [str(x) for x in columns_idx]
 
             for col_idx in columns_idx:
-                digits = sum(df[str(col_idx)].str.count(pat=r'\d'))
-                chars = sum(df[str(col_idx)].str.count(pat=r'[\w]'))
+                digits = df[col_idx].str.count(pat=r'\d').sum()
+                chars = df[col_idx].str.count(pat=r'[\w]').sum()
 
                 if digits/chars < 0.75:
                     # To infer a numeric or float column
                     # Check if the column contains more digits or characters
                     continue
 
-                df[str(col_idx)] = df[str(col_idx)].str.strip()
-                df[str(col_idx)].replace(regex={thou_regex: thousands_separator}, inplace=True)
+                df[col_idx] = df[col_idx].str.strip()
+                df[col_idx].replace(regex={thou_regex: thousands_separator}, inplace=True)
 
-                for i, _ in enumerate(df[str(col_idx)]):
-                    if not len(df[str(col_idx)][i]) > decimal_position:
+                for i, _ in enumerate(df[col_idx]):
+                    if not len(df[col_idx][i]) > decimal_position:
                         # length of atleast decimal_position
                         continue
-                    elif df[str(col_idx)][i][-(decimal_position+1)] == decimal_separator:
+                    elif df[col_idx][i][-(decimal_position+1)] == decimal_separator:
                         # nothing to do if decimal separator already in place
                         continue
 
                     # If decimal position is a not alphanumeric
-                    if re.search(r'\W+', df[str(col_idx)][i][-(decimal_position+1)]):
-                        digits = len(re.findall(r'\d', df[str(col_idx)][i]))
-                        if digits/len(df[str(col_idx)][i]) >= 0.5:
-                            df[str(col_idx)][i] = df[str(col_idx)][i][:-(decimal_position+1)] + decimal_separator + df[str(col_idx)][i][-decimal_position:]
+                    if re.search(r'\W+', df[col_idx][i][-(decimal_position+1)]):
+                        digits = len(re.findall(r'\d', df[col_idx][i]))
+                        if digits/len(df[col_idx][i]) >= 0.5:
+                            df[col_idx][i] = df[col_idx][i][:-(decimal_position+1)] + decimal_separator + df[col_idx][i][-decimal_position:]
 
             self.dataframes[df_idx] = df
         return self.dataframes
 
-    def fix_date_format(self, columns_idx: List[int] = None):
+    def fix_date_format(self, columns_idx: List[int] = None, delimiter: str = "/"):
         """
         To fix date formats of the column
         Eg: 12|1212020 as 12/12/2020
         :param columns_idx: user preferred columns indices.
                 Default loops through all columns to find Date Columns
+        :param delimiter: "/" or "-" whatelse you prefer
         :return: correted list of dataframes
         """
+        for df_idx, df in enumerate(self.dataframes):
+            if not columns_idx:
+                columns_idx = df.columns
+            columns_idx = [str(x) for x in columns_idx]
+
+            for col_idx in columns_idx:
+                date_regex = r'(\d{2}(\d{2})?)(\W)(\d{2})(\W)(\d{2}(\d{2})?)\b'
+                dates = df[col_idx].str.count(pat=date_regex).sum()
+
+                if not (dates >= len(df) * 0.75):
+                    # To infer a date column
+                    # Check if the column contains digits and non-alpha character greater than column length
+                    continue
+
+                df[col_idx] = df[col_idx].str.strip()
+                df[col_idx].replace(regex={date_regex: r'\1%s\4%s\6' % (delimiter, delimiter)}, inplace=True)
+
+            self.dataframes[df_idx] = df
+
         return self.dataframes
 
