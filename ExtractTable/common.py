@@ -64,9 +64,32 @@ class ConvertTo:
 
 
 class PostProcessing:
-    """To apply post processing techniques on the output"""
-    def __init__(self, et_resp: dict):
-        self.dataframes = ConvertTo(data=et_resp).output
+    def __init__(self, et_resp: dict = None, dataframes: List[pd.DataFrame] = None):
+        """
+        To apply post processing techniques on the output
+        :param et_resp: ExtractTable response
+        :param dataframes: user preferred dataframe(s).
+            Default assumes all dataframes from the extracttable response, `et_resp`.
+            If both `et_resp` and `dataframes` are provided, the later is considered for the processing
+        """
+        if et_resp:
+            self.dataframes = ConvertTo(data=et_resp).output
+
+        if not et_resp:
+            try:
+                self.dataframes = self.__isacceptable__(dataframes)
+            except ValueError:
+                raise ValueError("Either ExtractTable response or your preferred list of pandas dataframes is required")
+
+    @staticmethod
+    def __isacceptable__(dfs) -> List[pd.DataFrame]:
+        """Validate the `dataframes` param"""
+        if type(dfs) is list:
+            if all([type(df) is pd.DataFrame for df in dfs]):
+                return dfs
+        elif type(dfs) is pd.DataFrame:
+            return [dfs]
+        raise ValueError("Dataframes should be list of dataframes or a dataframe")
 
     def split_merged_rows(self) -> List[pd.DataFrame]:
         """
@@ -86,7 +109,6 @@ class PostProcessing:
                 if mode_:
                     # split the merged rows inside the col
                     tmp = [col.strip().split(' ', mode_) for col in row]
-
                     for idx in range(len(tmp[0])):
                         tmp_ = []
                         for x in range(len(tmp)):
@@ -143,9 +165,11 @@ class PostProcessing:
         :return: corrected list of dataframes
         """
         # TODO: Should we consider only bad confidence values?
-
         reg_ = f"[{decimal_separator}{thousands_separator}]"
-        thou_regex = reg_ + '(?=.*' + reg_ + ')'
+        if decimal_position > 0:
+            thou_regex = reg_ + '(?=.*' + reg_ + ')'
+        else:
+            thou_regex = reg_
         decimal_position = int(decimal_position)
 
         for df_idx, df in enumerate(self.dataframes):
@@ -163,7 +187,11 @@ class PostProcessing:
                     continue
 
                 df[col_idx] = df[col_idx].str.strip()
-                df[col_idx].replace(regex={thou_regex: thousands_separator}, inplace=True)
+                df[col_idx].replace(regex={r'%s' % thou_regex: thousands_separator}, inplace=True)
+
+                # To correct decimal position
+                if not decimal_position > 0:
+                    continue
 
                 for i, _ in enumerate(df[col_idx]):
                     if not len(df[col_idx][i]) > decimal_position:
