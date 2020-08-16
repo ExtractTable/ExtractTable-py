@@ -63,7 +63,7 @@ class ConvertTo:
             return dfs
 
 
-class PostProcessing:
+class MakeCorrections:
     def __init__(self, et_resp: dict = None, dataframes: List[pd.DataFrame] = None):
         """
         To apply post processing techniques on the output
