@@ -56,7 +56,7 @@ class ExtractTable:
         url = urlparse.urlunparse(('https', host, '', '', '', ''))
         self.ServerResponse = self._session.request(method, url, params=params, data=data, **kwargs)
         ValidateResponse(resp=self.ServerResponse, show_warn=self._WARNINGS)
-
+        self.server_response = self.ServerResponse.json()
         return self.ServerResponse.json()
 
     def check_usage(self) -> dict:
