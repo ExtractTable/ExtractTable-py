@@ -219,13 +219,13 @@ class MakeCorrections:
         :param delimiter: "/" or "-" whatelse you prefer
         :return: correted list of dataframes
         """
+        date_regex = r'(\d{2}(\d{2})?)(\W)(\d{2}|[A-Za-z]{3,9})(\W)(\d{2}(\d{2})?)\b'
         for df_idx, df in enumerate(self.dataframes):
             if not columns_idx:
                 columns_idx = df.columns
             columns_idx = [str(x) for x in columns_idx]
 
             for col_idx in columns_idx:
-                date_regex = r'(\d{2}(\d{2})?)(\W)(\d{2})(\W)(\d{2}(\d{2})?)\b'
                 dates = df[col_idx].str.count(pat=date_regex).sum()
 
                 if not (dates >= len(df) * 0.75):
@@ -239,4 +239,3 @@ class MakeCorrections:
             self.dataframes[df_idx] = df
 
         return self.dataframes
-
