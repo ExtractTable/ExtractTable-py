@@ -1,5 +1,5 @@
-VERSION = (2, 0, 2)
-PRERELEASE = None  # "alpha", "beta" or "rc"
+VERSION = (2, 1, 0)
+PRERELEASE = "beta"  # "alpha", "beta" or "rc"
 REVISION = None
 
 

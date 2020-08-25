@@ -38,7 +38,7 @@ class ConvertTo:
         for table in self.data.get("Tables", []):
             tmp = {int(k): v for k, v in table[table_obj].items()}
             # To convert column indices to int to maintain the table order with more than 9 columns
-            cols = [str(x) for x in sorted([int(x) for x in tmp[0]])]
+            cols = [str(x) for x in sorted([int(x) for x in tmp[0]])] if tmp else None
             # To convert row indices to int and maintain the table order with more than 9 rows
             tmp = collections.OrderedDict(sorted(tmp.items()))
             dfs.append(pd.DataFrame.from_dict(tmp, orient="index", columns=cols))
