@@ -14,7 +14,7 @@ import pandas as pd
 
 class ConvertTo:
     """Convert tabular JSON to an user requested output format"""
-    FORMATS = {"df", "dataframe", "json", "csv", "dict"}
+    FORMATS = {"df", "dataframe", "json", "csv", "dict", "xlsx", "excel"}
     DEFAULT = "df"
 
     def __init__(self, data: dict, fmt: str = DEFAULT, indexing: bool = False, table_obj="TableJson"):
@@ -55,6 +55,13 @@ class ConvertTo:
                 df.to_csv(csv_name, index=indexing, header=indexing)
                 output_location.append(csv_name)
             return output_location
+        elif fmt in ("xlsx", "excel"):
+            output_excel_location = os.path.join(tempfile.mkdtemp(), f"_tables_{len(dfs)}.xlsx")
+            with pd.ExcelWriter(output_excel_location) as writer:
+                for n, df in enumerate(dfs):
+                    df.to_excel(writer, f'table_{n+1}')
+                writer.save()
+            return [output_excel_location]
         elif fmt == "json":
             return [df.to_json() for df in dfs]
         else:
