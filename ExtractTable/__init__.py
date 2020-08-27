@@ -49,14 +49,14 @@ class ExtractTable:
         """
         tmp = self.__dict__.copy()
         for _type, _obj in tmp.items():
-            if _type not in ("api_key", "_session"):
+            if _type not in ("api_key", "_session", "input_filename"):
                 self.__delattr__(_type)
 
         host = host if not host.startswith("http") else host.split("/")[2]
         url = urlparse.urlunparse(('https', host, '', '', '', ''))
         self.ServerResponse = self._session.request(method, url, params=params, data=data, **kwargs)
         ValidateResponse(resp=self.ServerResponse, show_warn=self._WARNINGS)
-
+        self.server_response = self.ServerResponse.json()
         return self.ServerResponse.json()
 
     def check_usage(self) -> dict:
@@ -150,10 +150,12 @@ class ExtractTable:
         """
         # Raise a warning if unknown format is requested
         if output_format not in self._OUTPUT_FORMATS:
-            default_format = "dict"
-            warn_msg = f"Found: {output_format} as output_format; Allowed only {self._OUTPUT_FORMATS}. " \
-                       f"Assigned default format: {default_format}"
+            warn_msg = f"Found: '{output_format}' as output_format; Allowed formats are {self._OUTPUT_FORMATS}. " \
+                       f"Assigned to default format: {self._DEFAULT}"
             warnings.warn(warn_msg)
+
+        # To use the reference when saving the output
+        self.__setattr__('input_filename', os.path.basename(filepath))
 
         try:
             with PrepareInput(filepath, pages=pages) as infile:
@@ -168,5 +170,40 @@ class ExtractTable:
         for _type, _obj in trigger_resp.items():
             self.__setattr__(_type, _obj)
 
-        result = ConvertTo(data=trigger_resp, fmt=output_format, indexing=indexing).output
+        result = ConvertTo(server_response=trigger_resp, output_format=output_format, indexing=indexing).output
         return result
+
+    def save_output(self, output_folder: os.PathLike = "", output_format: str = "csv"):
+        """
+        Save the objects of session data to user preferred location or a default folder
+        :param output_folder: user preferred output location; default tmp directory
+        :param output_format: needed only for tables CSV or XLSX
+        :return: location of the output
+        """
+        input_fname = self.input_filename.rsplit('.')[0]
+
+        output_format = output_format.lower()
+        if output_format not in ("csv", "xlsx"):
+            output_format = "csv"
+            warnings.warn("Invalid 'output_format' given. Defaulted to 'csv'")
+
+        table_outputs_path = ConvertTo(server_response=self.server_response, output_format=output_format).output
+
+        if output_folder:
+            if not os.path.exists(output_folder):
+                output_folder = os.path.split(table_outputs_path[0])[0]
+                warnings.warn(f"Your output_folder not exists. Saving the outputs to {output_folder}")
+            else:
+                for each_tbl_path in table_outputs_path:
+                    os.replace(each_tbl_path, os.path.join(output_folder, input_fname+os.path.basename(each_tbl_path)))
+
+        else:
+            output_folder = os.path.split(table_outputs_path[0])[0]
+
+        for each_page in self.server_response.get("Lines", []):
+            page_txt_fname = os.path.join(output_folder, f"{input_fname}_Page_{str(each_page['Page'])}.txt")
+            page_txt = [each_line['Line'] for each_line in each_page['LinesArray']]
+            with open(page_txt_fname, "w", encoding="utf-8") as ofile:
+                ofile.write("\n".join(page_txt))
+
+        return output_folder

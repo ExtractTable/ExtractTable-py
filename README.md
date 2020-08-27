@@ -32,9 +32,33 @@ table_data = et_sess.process_file(filepath=Location_of_PDF_with_Tables, output_f
 ```
 
 ## Detailed Library Usage
- [example-code.ipynb](example-code.ipynb)
+The tutorial available at <a href="https://colab.research.google.com/github/ExtractTable/ExtractTable-py/blob/master/example-code.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> takes you through
 
-<a href="https://colab.research.google.com/github/ExtractTable/ExtractTable-py/blob/master/example-code.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+```Markup
+1. Installation
+2. Import and check version
+3. Create Session & Validate API Key
+    3.1 Create Session with your API Key
+    3.2 Validate the Key and check the plan usage
+    3.3 Check Usage Details
+4. Trigger the extraction process
+    4.1 Accepted Input Types
+    4.2 Process an IMAGE Input
+    4.3 Process a PDF Input
+    4.4 Output options
+    4.5 Explore session objects
+5. Explore the Output
+    5.1 Output Structure
+    5.2 Output Details
+6. Make Corrections
+    6.1 Split Merged Rows
+    6.2 Split Merged Columns
+    6.3 Fix Decimal Format
+    6.4 Fix Date Format
+7. Helpful Code Snippets
+    7.1 Get text data
+    7.2 Table output to Excel
+```
 
 ### Woahh, as simple as that ?!
 
