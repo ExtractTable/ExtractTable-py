@@ -13,19 +13,18 @@ import pandas as pd
 
 
 class ConvertTo:
-    """Convert tabular JSON to an user requested output format"""
     FORMATS = {"df", "dataframe", "json", "csv", "dict", "xlsx", "excel"}
     DEFAULT = "df"
 
-    def __init__(self, data: dict, fmt: str = DEFAULT, indexing: bool = False, table_obj="TableJson"):
+    def __init__(self, server_response: dict, output_format: str = DEFAULT, indexing: bool = False, table_obj="TableJson"):
         """
-
-        :param data: Tabular JSON data from server
-        :param fmt: format to be converted into
+        Convert the server response to an user requested output format on Tables
+        :param server_response: Tabular JSON data from server
+        :param output_format: format to be converted into
         :param indexing: row & column index consideration in the output
         """
-        self.data = data
-        self.output = self._converter(fmt.lower(), indexing=indexing, table_obj=table_obj)
+        self.server_response = server_response
+        self.output = self._converter(output_format.lower(), indexing=indexing, table_obj=table_obj)
 
     def _converter(self, fmt: str, indexing: bool = False, table_obj="TableJson") -> list:
         """
@@ -35,7 +34,7 @@ class ConvertTo:
         :return: list of tables from converted into the requested output format
         """
         dfs = []
-        for table in self.data.get("Tables", []):
+        for table in self.server_response.get("Tables", []):
             tmp = {int(k): v for k, v in table[table_obj].items()}
             # To convert column indices to int to maintain the table order with more than 9 columns
             cols = [str(x) for x in sorted([int(x) for x in tmp[0]])] if tmp else None
@@ -57,6 +56,8 @@ class ConvertTo:
             return output_location
         elif fmt in ("xlsx", "excel"):
             output_excel_location = os.path.join(tempfile.mkdtemp(), f"_tables_{len(dfs)}.xlsx")
+            if len(dfs) >= 10:
+                warnings.warn(f"There are {dfs} tables extracted. Consider to change the output_format to 'csv' instead")
             with pd.ExcelWriter(output_excel_location) as writer:
                 for n, df in enumerate(dfs):
                     df.to_excel(writer, f'table_{n+1}')
