@@ -81,7 +81,7 @@ class MakeCorrections:
             If both `et_resp` and `dataframes` are provided, the later is considered for the processing
         """
         if et_resp:
-            self.dataframes = ConvertTo(data=et_resp).output
+            self.dataframes = ConvertTo(server_response=et_resp).output
 
         if not et_resp:
             try:
