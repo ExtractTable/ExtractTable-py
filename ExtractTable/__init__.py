@@ -188,7 +188,7 @@ class ExtractTable:
             output_format = "csv"
             warnings.warn("Invalid 'output_format' given. Defaulted to 'csv'")
 
-        table_outputs_path = ConvertTo(server_response=self.server_response, output_format=output_format).output
+        table_outputs_path = ConvertTo(server_response=self.server_response, output_format=output_format, indexing=indexing).output
 
         if output_folder:
             if not os.path.exists(output_folder):
