@@ -60,7 +60,7 @@ class ConvertTo:
                 warnings.warn(f"There are {dfs} tables extracted. Consider to change the output_format to 'csv' instead")
             with pd.ExcelWriter(output_excel_location) as writer:
                 for n, df in enumerate(dfs):
-                    df.to_excel(writer, f'table_{n+1}')
+                    df.to_excel(writer, f'table_{n+1}', index=indexing, header=indexing)
                 writer.save()
             return [output_excel_location]
         elif fmt == "json":
