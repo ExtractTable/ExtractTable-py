@@ -173,11 +173,12 @@ class ExtractTable:
         result = ConvertTo(server_response=trigger_resp, output_format=output_format, indexing=indexing).output
         return result
 
-    def save_output(self, output_folder: os.PathLike = "", output_format: str = "csv"):
+    def save_output(self, output_folder: os.PathLike = "", output_format: str = "csv", indexing: bool = False):
         """
         Save the objects of session data to user preferred location or a default folder
         :param output_folder: user preferred output location; default tmp directory
         :param output_format: needed only for tables CSV or XLSX
+        :param indexing: row & column index consideration in the output
         :return: location of the output
         """
         input_fname = self.input_filename.rsplit('.')[0]
@@ -187,7 +188,7 @@ class ExtractTable:
             output_format = "csv"
             warnings.warn("Invalid 'output_format' given. Defaulted to 'csv'")
 
-        table_outputs_path = ConvertTo(server_response=self.server_response, output_format=output_format).output
+        table_outputs_path = ConvertTo(server_response=self.server_response, output_format=output_format, indexing=indexing).output
 
         if output_folder:
             if not os.path.exists(output_folder):
