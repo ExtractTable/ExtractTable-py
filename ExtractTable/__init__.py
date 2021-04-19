@@ -68,6 +68,19 @@ class ExtractTable:
         resp = self._make_request('get', HOST.VALIDATOR)
 
         return resp['usage']
+    
+    def view_transactions(self) -> list:
+        """
+        View your transactions in the past 24 hours
+        :return list of transactions; each record with
+            JobStatus: Status of the job
+            Pages: number of pages of the input; can also be considered as number of credits consumed
+            createdon: timestamp when the request was processed
+            requested_filename: Filename received in the request
+            txn_id: Unique identifier of the transaction, also referred as JobId when retrieving the output via get_result()
+        """
+        resp = self._make_request("GET", HOST.TRANSACTIONS)
+        return resp
 
     def get_result(self, job_id: str, wait_time: int = 10, max_wait_time: int = 300) -> dict:
         """
