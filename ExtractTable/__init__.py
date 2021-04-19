@@ -3,6 +3,7 @@ Any Request or Response of a transaction must take place here
 """
 from urllib import parse as urlparse
 import os
+import shutil
 import typing as ty
 from typing import BinaryIO
 import time
@@ -196,8 +197,7 @@ class ExtractTable:
                 warnings.warn(f"Your output_folder not exists. Saving the outputs to {output_folder}")
             else:
                 for each_tbl_path in table_outputs_path:
-                    os.replace(each_tbl_path, os.path.join(output_folder, input_fname+os.path.basename(each_tbl_path)))
-
+                    shutil.move(each_tbl_path, os.path.join(output_folder, input_fname+os.path.basename(each_tbl_path)))
         else:
             output_folder = os.path.split(table_outputs_path[0])[0]
 
