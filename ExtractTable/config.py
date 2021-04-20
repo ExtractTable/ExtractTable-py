@@ -9,6 +9,7 @@ class HOST:
     TRIGGER = 'trigger.extracttable.com'
     RESULT = 'getresult.extracttable.com'
     BIGFILE = 'bigfile.extracttable.com'
+    TRANSACTIONS = 'viewtransactions.extracttable.com'
 
 
 class JobStatus:

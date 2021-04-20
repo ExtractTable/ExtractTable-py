@@ -57,7 +57,11 @@ class ConvertTo:
         elif fmt in ("xlsx", "excel"):
             output_excel_location = os.path.join(tempfile.mkdtemp(), f"_tables_{len(dfs)}.xlsx")
             if len(dfs) >= 10:
-                warnings.warn(f"There are {dfs} tables extracted. Consider to change the output_format to 'csv' instead")
+                warnings.warn(f"There are {len(dfs)} tables extracted. Consider to change the output_format to 'csv' instead")
+            elif not len(dfs):
+                warnings.warn(f"There are {len(dfs)} tables extracted")
+                return []
+
             with pd.ExcelWriter(output_excel_location) as writer:
                 for n, df in enumerate(dfs):
                     df.to_excel(writer, f'table_{n+1}', index=indexing, header=indexing)
@@ -243,6 +247,29 @@ class MakeCorrections:
 
                 df[col_idx] = df[col_idx].str.strip()
                 df[col_idx].replace(regex={date_regex: r'\1%s\4%s\6' % (delimiter, delimiter)}, inplace=True)
+
+            self.dataframes[df_idx] = df
+
+        return self.dataframes
+    
+    def fix_characters(self, columns_idx: List[int] = None, replace_ref: dict = {}):
+        """
+        To replace incorrect character detections
+        Eg: $123,45.0I as $123,45.01
+        :param columns_idx: user preferred columns indices.
+                Default loops through all columns to find Date Columns
+        :param replace_ref: the replacement dictionary for reference
+                Eg: {"I": "1"}
+        :return: correted list of dataframes
+        """
+        for df_idx, df in enumerate(self.dataframes):
+            if not columns_idx:
+                columns_idx = df.columns
+            columns_idx = [str(x) for x in columns_idx]
+
+            for col_idx in columns_idx:
+                for find_ch, repl_ch in replace_ref.items():
+                    df[col_idx] = df[col_idx].str.replace(str(find_ch), str(repl_ch))
 
             self.dataframes[df_idx] = df
 

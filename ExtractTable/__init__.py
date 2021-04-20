@@ -3,6 +3,7 @@ Any Request or Response of a transaction must take place here
 """
 from urllib import parse as urlparse
 import os
+import shutil
 import typing as ty
 from typing import BinaryIO
 import time
@@ -67,6 +68,19 @@ class ExtractTable:
         resp = self._make_request('get', HOST.VALIDATOR)
 
         return resp['usage']
+    
+    def view_transactions(self) -> list:
+        """
+        View your transactions in the past 24 hours
+        :return list of transactions; each record with
+            JobStatus: Status of the job
+            Pages: number of pages of the input; can also be considered as number of credits consumed
+            createdon: timestamp when the request was processed
+            requested_filename: Filename received in the request
+            txn_id: Unique identifier of the transaction, also referred as JobId when retrieving the output via get_result()
+        """
+        resp = self._make_request("GET", HOST.TRANSACTIONS)
+        return resp
 
     def get_result(self, job_id: str, wait_time: int = 10, max_wait_time: int = 300) -> dict:
         """
@@ -196,8 +210,7 @@ class ExtractTable:
                 warnings.warn(f"Your output_folder not exists. Saving the outputs to {output_folder}")
             else:
                 for each_tbl_path in table_outputs_path:
-                    os.replace(each_tbl_path, os.path.join(output_folder, input_fname+os.path.basename(each_tbl_path)))
-
+                    shutil.move(each_tbl_path, os.path.join(output_folder, input_fname+os.path.basename(each_tbl_path)))
         else:
             output_folder = os.path.split(table_outputs_path[0])[0]
 
