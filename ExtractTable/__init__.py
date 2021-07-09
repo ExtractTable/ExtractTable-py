@@ -82,7 +82,7 @@ class ExtractTable:
         resp = self._make_request("GET", HOST.TRANSACTIONS)
         return resp
 
-    def get_result(self, job_id: str, wait_time: int = 10, max_wait_time: int = 300, **kwargs) -> dict:
+    def get_result(self, job_id: str, wait_time: int = 10, max_wait_time: int = 300) -> dict:
         """
         Retrieve the tabular data of a triggered job based on the JobId
         :param job_id: JobId received from an already triggered process
@@ -91,14 +91,13 @@ class ExtractTable:
         :return: Tabular JSON when processed successful else helpful user info
         """
         params = {'JobId': job_id}
-        form_data = dict(kwargs)
-        resp = self._make_request('get', HOST.RESULT, params=params, data=form_data)
+        resp = self._make_request('get', HOST.RESULT, params=params)
         # Loop to retrieve the output until max_wait_time is reached
         max_wait_time = int(max_wait_time)
         while self._WAIT_UNTIL_OUTPUT and resp["JobStatus"] == JobStatus.PROCESSING and max_wait_time > 0:
             time.sleep(max(10, int(wait_time)))
             max_wait_time -= wait_time
-            resp = self._make_request('get', HOST.RESULT, params=params, data=form_data)
+            resp = self._make_request('get', HOST.RESULT, params=params)
 
         return resp
 
