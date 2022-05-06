@@ -27,9 +27,9 @@ class CheckFile:
             return
         raise ClientFileTypeError(Message=f"Allowed file types are {self.__SUPPORTED_EXTENSIONS__}")
 
-    def is_big_size(self) -> ty.Union[Exception, None]:
+    def is_big_size(self) -> bool:
         # 1027 to create some buffer
-        return os.stat(self.filepath).st_size <= self.__THRESHOLD_SIZE__*1027*1027
+        return os.stat(self.filepath).st_size > self.__THRESHOLD_SIZE__*1027*1027
 
 
 class PrepareInput:
