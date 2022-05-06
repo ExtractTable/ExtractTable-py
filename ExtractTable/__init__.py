@@ -175,15 +175,16 @@ class ExtractTable:
         # To use the reference when saving the output
         self.__setattr__('input_filename', os.path.basename(filepath))
 
-        try:
-            with PrepareInput(filepath, pages=pages) as infile:
-                with open(infile.filepath, 'rb') as fp:
+        with PrepareInput(filepath, pages=pages) as infile:
+            with open(infile.filepath, 'rb') as fp:
+                is_big_file = CheckFile(infile.filepath).is_big
+                if is_big_file:
                     trigger_resp = self.trigger_process(fp, dup_check=dup_check, **kwargs)
-        except ClientFileSizeError:
-            big_gen = self.bigfile_upload(filepath=os.path.basename(filepath))
-            with open(filepath, 'rb') as ifile:
-                rq.post(big_gen['url'], data=big_gen['fields'], files={'file': ifile})
-            trigger_resp = self.trigger_process(None, signed_filename=big_gen["fields"]["key"], dup_check=dup_check, **kwargs)
+                else:
+                    big_gen = self.bigfile_upload(filepath=os.path.basename(infile.filepath))
+                    with open(infile.filepath, 'rb') as ifile:
+                        rq.post(big_gen['url'], data=big_gen['fields'], files={'file': ifile})
+                    trigger_resp = self.trigger_process(None, signed_filename=big_gen["fields"]["key"], dup_check=dup_check, **kwargs)
 
         for _type, _obj in trigger_resp.items():
             self.__setattr__(_type, _obj)
