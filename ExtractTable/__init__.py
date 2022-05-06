@@ -178,7 +178,7 @@ class ExtractTable:
         with PrepareInput(filepath, pages=pages) as infile:
             with open(infile.filepath, 'rb') as fp:
                 is_big_file = CheckFile(infile.filepath).is_big
-                if is_big_file:
+                if not is_big_file:
                     trigger_resp = self.trigger_process(fp, dup_check=dup_check, **kwargs)
                 else:
                     big_gen = self.bigfile_upload(filepath=os.path.basename(infile.filepath))
