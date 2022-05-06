@@ -11,7 +11,7 @@ import warnings
 
 import requests as rq
 
-from .FileOperations import PrepareInput
+from .FileOperations import PrepareInput, CheckFile
 from .config import HOST, JobStatus
 from .parsers import ValidateResponse
 from .common import ConvertTo
@@ -98,6 +98,10 @@ class ExtractTable:
             time.sleep(max(10, int(wait_time)))
             max_wait_time -= wait_time
             resp = self._make_request('get', HOST.RESULT, params=params)
+        
+        if resp.get('DownloadUrl', ''):
+            self.ServerResponse = rq.get(resp['DownloadUrl'])
+            self.server_response = resp = self.ServerResponse.json()
 
         return resp
 
