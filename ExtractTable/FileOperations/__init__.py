@@ -19,7 +19,7 @@ class CheckFile:
     def __init__(self, filepath: ty.Union[os.PathLike, str]):
         self.filepath = filepath
         self.type_error()
-        self.size_error()
+        self.is_big = self.is_big_size()
 
     def type_error(self) -> ty.Union[Exception, None]:
         """To check file extension"""
@@ -27,11 +27,9 @@ class CheckFile:
             return
         raise ClientFileTypeError(Message=f"Allowed file types are {self.__SUPPORTED_EXTENSIONS__}")
 
-    def size_error(self) -> ty.Union[Exception, None]:
+    def is_big_size(self) -> bool:
         # 1027 to create some buffer
-        if os.stat(self.filepath).st_size <= self.__THRESHOLD_SIZE__*1027*1027:
-            return
-        raise ClientFileSizeError(Message=f"File Size greater than the threshold {self.__THRESHOLD_SIZE__} Mb.")
+        return os.stat(self.filepath).st_size > self.__THRESHOLD_SIZE__*1027*1027
 
 
 class PrepareInput:
@@ -55,11 +53,10 @@ class PrepareInput:
             print("[Info]: Aggregating user defined pages..", self.pages)
             gather_pages = self._get_pages(self.filepath, pages)
             self.filepath = self.pdf_separator(gather_pages)
-        CheckFile(self.filepath)
 
     def pdf_separator(self, gather_pages: set):
         """PDF Splitter"""
-        merged_pdf = os.path.join(self.temp_dir, str(self.pages) + os.path.basename(self.filepath))
+        merged_pdf = os.path.join(self.temp_dir, str(self.pages) + "_" + os.path.basename(self.filepath))
         with open(merged_pdf, 'wb') as out_file:
             pdf_reader = PyPDF2.PdfFileReader(self.filepath)
             pdf_writer = PyPDF2.PdfFileWriter()

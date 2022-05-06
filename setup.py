@@ -10,8 +10,7 @@ with open(os.path.join('ExtractTable', '__version__.py'), 'r') as f:
 with open('README.md', 'r') as f:
     readme = f.read()
 
-with open("requirements.txt") as fh:
-    requires = [x.strip() for x in fh.readlines()]
+requires = ['requests>=2.21', 'pandas>=0.24', 'PyPDF2>=1.26']
 
 
 def setup_package():
