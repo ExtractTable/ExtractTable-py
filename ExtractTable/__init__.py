@@ -216,11 +216,11 @@ class ExtractTable:
                 except Exception as e:
                     warnings.warn(f"[Warn]: {str(e)}")
                     warnings.warn(f"Failed to created output_folder not exists. Saving the outputs to {output_folder}")
-                    output_folder = os.path.dirname(table_outputs_path[ 0 ])
+                    output_folder = os.path.dirname(table_outputs_path[0])
         else:
-            output_folder = os.path.dirname(table_outputs_path[ 0 ])
+            output_folder = os.path.dirname(table_outputs_path[0])
 
-        if output_folder != os.path.dirname(table_outputs_path[ 0 ]):
+        if output_folder != os.path.dirname(table_outputs_path[0]):
             for each_tbl_path in table_outputs_path:
                 shutil.move(each_tbl_path,
                             os.path.join(output_folder, input_fname + os.path.basename(each_tbl_path)))
