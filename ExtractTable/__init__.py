@@ -211,13 +211,19 @@ class ExtractTable:
 
         if output_folder:
             if not os.path.exists(output_folder):
-                output_folder = os.path.split(table_outputs_path[0])[0]
-                warnings.warn(f"Your output_folder not exists. Saving the outputs to {output_folder}")
-            else:
-                for each_tbl_path in table_outputs_path:
-                    shutil.move(each_tbl_path, os.path.join(output_folder, input_fname+os.path.basename(each_tbl_path)))
+                try:
+                    os.mkdir(output_folder)
+                except Exception as e:
+                    warnings.warn(f"[Warn]: {str(e)}")
+                    warnings.warn(f"Failed to created output_folder not exists. Saving the outputs to {output_folder}")
+                    output_folder = os.path.dirname(table_outputs_path[0])
         else:
-            output_folder = os.path.split(table_outputs_path[0])[0]
+            output_folder = os.path.dirname(table_outputs_path[0])
+
+        if output_folder != os.path.dirname(table_outputs_path[0]):
+            for each_tbl_path in table_outputs_path:
+                shutil.move(each_tbl_path,
+                            os.path.join(output_folder, input_fname + os.path.basename(each_tbl_path)))
 
         for each_page in self.server_response.get("Lines", []):
             page_txt_fname = os.path.join(output_folder, f"{input_fname}_Page_{str(each_page['Page'])}.txt")

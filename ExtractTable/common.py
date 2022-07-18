@@ -3,6 +3,7 @@ Preprocess the output received from server and interface as a final result to th
 """
 import os
 import re
+import shutil
 import tempfile
 import warnings
 import collections
@@ -84,6 +85,7 @@ class MakeCorrections:
             Default assumes all dataframes from the extracttable response, `et_resp`.
             If both `et_resp` and `dataframes` are provided, the later is considered for the processing
         """
+        self.et_resp = et_resp
         if et_resp:
             self.dataframes = ConvertTo(server_response=et_resp).output
 
@@ -134,6 +136,7 @@ class MakeCorrections:
                     reformat.append(row)
 
             self.dataframes[df_idx] = pd.DataFrame(reformat)
+            self.et_resp['Tables'][df_idx]['TableJson'] = self.dataframes[df_idx].to_dict(orient='index')
 
         return self.dataframes
 
@@ -147,12 +150,11 @@ class MakeCorrections:
         """
         # TODO: Should we consider delimiter_pattern for the split?
         for df_idx, df in enumerate(self.dataframes):
-            if not columns_idx:
-                columns_idx = df.columns
+            cols_idx = df.columns if not columns_idx else columns_idx.copy()
+            cols_idx = [str(x) for x in cols_idx]
 
-            columns_idx = [str(x) for x in columns_idx]
             reformat = []
-            for col_idx in columns_idx:
+            for col_idx in cols_idx:
                 tmp = df[col_idx].str.split(expand=True)
 
                 if not any([not any(tmp.isna().any()), force_split]) or tmp.shape[-1] == 1:
@@ -163,6 +165,7 @@ class MakeCorrections:
                     reformat.extend([tmp[each].tolist() for each in tmp.columns])
 
             self.dataframes[df_idx] = pd.DataFrame(reformat).T
+            self.et_resp['Tables'][df_idx]['TableJson'] = self.dataframes[df_idx].to_dict(orient='index')
 
         return self.dataframes
 
@@ -185,11 +188,10 @@ class MakeCorrections:
         decimal_position = int(decimal_position)
 
         for df_idx, df in enumerate(self.dataframes):
-            if not columns_idx:
-                columns_idx = df.columns
-            columns_idx = [str(x) for x in columns_idx]
+            cols_idx = df.columns if not columns_idx else columns_idx.copy()
+            cols_idx = [str(x) for x in cols_idx]
 
-            for col_idx in columns_idx:
+            for col_idx in cols_idx:
                 digits = df[col_idx].str.count(pat=r'\d').sum()
                 chars = df[col_idx].str.count(pat=r'[\w]').sum()
 
@@ -220,6 +222,8 @@ class MakeCorrections:
                             df[col_idx][i] = df[col_idx][i][:-(decimal_position+1)] + decimal_separator + df[col_idx][i][-decimal_position:]
 
             self.dataframes[df_idx] = df
+            self.et_resp['Tables'][df_idx]['TableJson'] = self.dataframes[df_idx].to_dict(orient='index')
+
         return self.dataframes
 
     def fix_date_format(self, columns_idx: List[int] = None, delimiter: str = "/"):
@@ -233,11 +237,10 @@ class MakeCorrections:
         """
         date_regex = r'(\d{2}(\d{2})?)(\W)(\d{2}|[A-Za-z]{3,9})(\W)(\d{2}(\d{2})?)\b'
         for df_idx, df in enumerate(self.dataframes):
-            if not columns_idx:
-                columns_idx = df.columns
-            columns_idx = [str(x) for x in columns_idx]
+            cols_idx = df.columns if not columns_idx else columns_idx.copy()
+            cols_idx = [str(x) for x in cols_idx]
 
-            for col_idx in columns_idx:
+            for col_idx in cols_idx:
                 dates = df[col_idx].str.count(pat=date_regex).sum()
 
                 if not (dates >= len(df) * 0.75):
@@ -249,6 +252,7 @@ class MakeCorrections:
                 df[col_idx].replace(regex={date_regex: r'\1%s\4%s\6' % (delimiter, delimiter)}, inplace=True)
 
             self.dataframes[df_idx] = df
+            self.et_resp['Tables'][df_idx]['TableJson'] = self.dataframes[df_idx].to_dict(orient='index')
 
         return self.dataframes
     
@@ -263,14 +267,49 @@ class MakeCorrections:
         :return: correted list of dataframes
         """
         for df_idx, df in enumerate(self.dataframes):
-            if not columns_idx:
-                columns_idx = df.columns
-            columns_idx = [str(x) for x in columns_idx]
+            cols_idx = df.columns if not columns_idx else columns_idx.copy()
+            cols_idx = [str(x) for x in cols_idx]
 
-            for col_idx in columns_idx:
+            for col_idx in cols_idx:
                 for find_ch, repl_ch in replace_ref.items():
                     df[col_idx] = df[col_idx].str.replace(str(find_ch), str(repl_ch))
 
             self.dataframes[df_idx] = df
-
+            self.et_resp['Tables'][df_idx]['TableJson'] = self.dataframes[df_idx].to_dict(orient='index')
         return self.dataframes
+
+    def save_output(self, output_folder: os.PathLike = "", output_format: str = "csv", indexing: bool = False):
+        """
+        Save the objects of session data to user preferred location or a default folder
+        :param output_folder: user preferred output location; default tmp directory
+        :param output_format: needed only for tables CSV or XLSX
+        :param indexing: row & column index consideration in the output
+        :return: location of the output
+        """
+        input_fname = "corrected_"
+
+        output_format = output_format.lower()
+        if output_format not in ("csv", "xlsx"):
+            output_format = "csv"
+            warnings.warn("Invalid 'output_format' given. Defaulted to 'csv'")
+    
+        table_outputs_path = ConvertTo(server_response=self.et_resp, output_format=output_format, indexing=indexing).output
+
+        if output_folder:
+            if not os.path.exists(output_folder):
+                try:
+                    os.mkdir(output_folder)
+                except Exception as e:
+                    warnings.warn(f"[Warn]: {str(e)}")
+                    warnings.warn(f"Failed to created output_folder not exists. Saving the outputs to {output_folder}")
+                    output_folder = os.path.dirname(table_outputs_path[0])
+        else:
+            output_folder = os.path.dirname(table_outputs_path[0])
+        
+        if output_folder != os.path.dirname(table_outputs_path[0]):
+            for each_tbl_path in table_outputs_path:
+                shutil.move(each_tbl_path,
+                            os.path.join(output_folder, input_fname + os.path.basename(each_tbl_path)))
+
+        return output_folder
+        
