@@ -58,7 +58,7 @@ class PrepareInput:
         """PDF Splitter"""
         merged_pdf = os.path.join(self.temp_dir, str(self.pages) + "_" + os.path.basename(self.filepath))
         with open(merged_pdf, 'wb') as out_file:
-            pdf_reader = PyPDF2.PdfFileReader(self.filepath)
+            pdf_reader = PyPDF2.PdfReader(self.filepath)
             pdf_writer = PyPDF2.PdfFileWriter()
             for page in gather_pages:
                 try:
